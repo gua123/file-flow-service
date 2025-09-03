@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>API测试工具</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+        
+        .section {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        input, textarea, button {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #4a90e2;
+        }
+        
+        button {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        button:hover {
+            background: #3a7bc8;
+        }
+        
+        .result {
+            background: #ffffff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        #api-list li {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        #api-list li:hover {
+            background-color: #f0f5ff;
+            border-left: 4px solid #4a90e2;
+        }
+    </style>
+</head>
+<body>
+    <h1>API测试工具</h1>
+
+    <!-- 登录功能 -->
+    <div class="section">
+        <h2>登录</h2>
+        <input type="text" id="username" placeholder="用户名" required>
+        <input type="password" id="password" placeholder="密码" required>
+        <button onclick="login()">登录</button>
+        <div>Token: <span id="token"></span></div>
+    </div>
+
+    <!-- 接口测试功能 -->
+    <div class="section">
+        <h2>接口测试</h2>
+        <input type="text" id="api-url" placeholder="接口路径" value="/api/v1/test">
+        <textarea id="params" placeholder="请求参数 (JSON)" rows="4" cols="50">{}</textarea>
+        <button onclick="testApi()">发送请求</button>
+        <div class="result" id="result"></div>
+    </div>
+
+    <!-- 接口列表 -->
+    <div class="section">
+        <h2>接口列表</h2>
+        <ul id="api-list"></ul>
+    </div>
+
+    <script>
+        // 登录功能
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            if (!username || !password) {
+                alert('请输入用户名和密码');
+                return;
+            }
+            const token = 'token_' + Math.random().toString(36).substr(2, 9);
+            document.getElementById('token').innerText = token;
+        }
+
+        // 接口测试功能
+        function testApi() {
+            const url = document.getElementById('api-url').value;
+            const params = document.getElementById('params').value;
+            if (!url) {
+                alert('请输入接口路径');
+                return;
+            }
+            try {
+                const body = JSON.parse(params);
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + document.getElementById('token').innerText
+                    },
+                    body: JSON.stringify(body)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('result').innerText = JSON.stringify(data, null, 2);
+                })
+                .catch(error => {
+                    document.getElementById('result').innerText = '错误: ' + error.message;
+                });
+            } catch (e) {
+                document.getElementById('result').innerText = '参数格式错误: ' + e.message;
+            }
+        }
+
+        // 接口列表
+        const apiEndpoints = [
+            '/api/tasks',
+            '/api/tasks',
+            '/api/tasks/{id}',
+            '/api/tasks/{id}',
+            '/api/tasks/{id}/cancel',
+            '/api/login',
+            '/api/executor/status',
+            '/api/logs',
+            '/api/config',
+            '/api/config/{key}',
+            '/api/files/upload',
+            '/api/files/{id}/download',
+            '/api/hardware/stats',
+            '/api/system/info',
+            '/api/processes',
+            '/api/tasks/stats',
+            '/api/threadpool/stats'
+        ];
+
+        apiEndpoints.forEach(endpoint => {
+            const li = document.createElement('li');
+            li.textContent = endpoint;
+            li.style.cursor = 'pointer';
+            li.addEventListener('click', () => {
+                document.getElementById('api-url').value = endpoint;
+            });
+            document.getElementById('api-list').appendChild(li);
+        });
+    </script>
+</body>
+</html>

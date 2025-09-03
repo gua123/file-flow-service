@@ -1,0 +1,15 @@
+{
+  "tasks": [
+    {
+      "id": "task-001",
+      "name": "数据处理任务",
+      "status": "in_progress",
+      "creator": "admin",
+      "createdAt": "2025-08-05T23:40:00Z",
+      "assignedTo": "editor",
+      "description": "对用户上传的CSV文件进行清洗和分析。",
+      "resultPath": "file/results/task-001/output.json",
+      "progress": 65
+    }
+  ]
+}

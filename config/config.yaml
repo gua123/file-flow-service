@@ -1,0 +1,167 @@
+# config/config.yaml
+# 根据项目明细书调整后的配置文件，每个配置项均添加注释说明
+
+app:
+  port: 8080 # 服务监听端口（整数，如 8080）
+  name: "cms-flow-service" # 服务名称（用于日志和监控标识）
+  env: "development" # 运行环境（development/production/staging）
+  version: "1.0.0" # 当前版本号（格式：主版本.次版本.修订号）
+  enable_env_overrides: true # 是否启用环境变量覆盖配置（true/false）
+
+logger:
+  base_path: "./log" # 日志文件存储根目录路径
+  levels:
+    debug: true # 是否启用DEBUG级别日志（开发环境建议true，生产环境false）
+    info: true # 是否启用INFO级别日志（默认开启）
+    warn: true # 是否启用WARNING级别日志（默认开启）
+    error: true # 是否启用ERROR级别日志（默认开启）
+    critical: true # 是否启用CRITICAL级别日志（默认开启）
+  format: "json" # 日志输出格式（支持json/text）
+  rotation:
+    max_age_days: 30 # 日志文件保留最大天数（超过自动删除）
+    max_size_mb: 1024 # 单个日志文件最大大小（MB）
+    time_interval: "24h" # 日志轮转时间间隔（Go Duration格式，如24h/72h）
+  outputs:
+    - "file" # 日志输出目标（file: 文件存储）
+    - "stdout" # 日志输出目标（stdout: 控制台输出）
+
+threadpool:
+  max_workers: 10 # 最大并发工作线程数（根据CPU核心数调整）
+  max_queue: 100 # 任务队列最大容量（超过时拒绝新任务）
+  task_timeout: "5m" # 单个任务执行超时时间（Go Duration格式，如5m/30s）
+  auto_scale: true # 是否启用动态调整线程数（根据负载自动增减）
+  min_workers: 5 # 动态调整时的最小线程数
+  memory_limit: "50GB" # 线程池内存限制（Go单位格式，如50GB）
+  #memory_limit: "50GB" # 合法
+  #  memory_limit: "1024MB" # 合法
+  # memory_limit: "512K" # 合法
+  #  memory_limit: "0.5TB" # 合法
+  #  memory_limit: "invalid" # 非法（缺少单位）
+  #  memory_limit: "100ZB" # 非法（单位不支持）
+
+web:
+  middleware:
+    auth_enabled: true # 是否启用中间件认证（true/false）
+  routes:
+    health_check: "/health" # 健康检查HTTP端点路径
+    task_endpoint: "/api/task" # 任务API端点路径
+
+file:
+  storage_path: "/var/app/files" # 文件存储根目录路径
+  max_upload_size: 10485760 # 最大上传文件大小（字节，此处为10MB）
+
+internal:
+  service:
+    sandbox_timeout: 300 # 沙箱任务执行超时时间（秒）
+    max_parallel_tasks: 5 # 允许同时执行的最大任务数
+  monitor:
+    heartbeat_interval: 5 # 服务心跳检测间隔（秒）
+
+hot_reload:
+  enabled: true # 是否启用热重载配置（true/false）
+  update_endpoint: "/config/reload" # 热重载配置更新端点
+  allowed_paths:
+    - "app.port" # 允许热重载的配置路径
+    - "logger.levels" # 允许热重载的配置路径
+    - "threadpool.max_workers" # 允许热重载的配置路径
+
+security:
+  jwt_secret: "your_secure_jwt_secret_here" # JWT加密密钥（需替换为实际密钥）
+  csrf_enabled: true # 是否启用CSRF保护（true/false）
+
+database:
+  connection: "" # 数据库连接字符串（根据实际环境填写）
+
+
+logging:
+  rotate_size: 10485760 # 日志轮转文件大小阈值（字节，此处为10MB）
+  rotate_count: 3 # 保留的轮转日志文件数量
+
+permissions:
+  default_file_mode: 0644 # 新建文件默认权限模式
+  default_dir_mode: 0755 # 新建目录默认权限模式
+
+threadpool_monitoring:
+  stats_interval: 5 # 线程池状态统计上报间隔（秒）
+
+# 以下配置项未被编辑建议修改，保留原有配置
+sandbox:
+  isolation:
+    chroot: true # 是否启用chroot进程隔离（限制文件系统可见性）
+    user: "nobody" # 沙箱进程运行的非特权用户
+    group: "nogroup" # 沙箱进程运行的非特权用户组
+  resource_limits:
+    memory: "50GB" # 单任务最大内存限制（Go单位格式，如100MB/512MiB）
+    cpu_cores: 2 # 单任务可使用的最大CPU核心数
+  execution_timeout: "10m" # 任务执行总超时时间（超过强制终止）
+
+monitoring:
+  status_push_interval: "500ms" # WebSocket状态推送间隔（实时监控频率）
+  health_check:
+    path: "/healthz" # 健康检查HTTP端点路径
+    interval: "1m" # 健康检查执行间隔（Go Duration格式）
+  resource_thresholds:
+    memory_usage_percent: 90 # 内存使用率告警阈值（百分比）
+    cpu_usage_percent: 95 # CPU使用率告警阈值（百分比）
+
+clients:
+  web:
+    max_connections: 1000 # WebSocket最大并发连接数
+  desktop:
+    upload_chunk_size: "5MB" # 桌面客户端文件分片上传大小（Go单位格式）
+
+dependencies:
+  rclone:
+    chunk_size: "10MB" # 文件分片上传大小（Go单位格式）
+    concurrency: 4 # 并发上传线程数
+  template:
+    strict_mode: true # 模板渲染是否启用严格模式（true/false）
+
+env_overrides:
+  priority: "env_first" # 覆盖优先级（env_first: 环境变量优先）
+  allowed_vars:
+    - "CFG_PORT" # 对应 app.port
+    - "LOG_LEVEL" # 对应 logger.levels 的总开关（如设置为 "debug"）
+    - "MAX_WORKERS" # 对应 threadpool.max_workers
+    - "SANDBOX_MEMORY" # 新增：沙箱内存限制覆盖
+
+file_management:
+  task_dir:
+    cleanup_delay: "5m" # 任务完成后目录清理延迟时间（防止文件句柄未释放）
+    max_retention_days: 7 # 异常任务目录最长保留天数（正常任务按cleanup_delay清理）
+  results:
+    max_versions: 7 # 单个任务结果文件保留的最大版本数
+    retention_policy: "keep_latest" # 版本保留策略（keep_latest/keep_all）
+  locks:
+    timeout: "5m" # 文件锁自动释放超时时间（防止死锁）
+  base_paths:
+    tasks: "./file/tasks" # 任务实例目录根路径
+    results: "./file/results" # 任务结果文件存储路径
+    logs: "./file/logs" # 全局日志文件存储路径
+
+permission_conf:
+  roles:
+    - name: "Admin" # 角色名称
+      permissions:
+        - "manage_all_tasks" # 权限项：管理所有任务
+        - "modify_config" # 权限项：修改配置
+        - "access_audit_logs" # 权限项：访问审计日志
+        - "view_task_status" # 权限项：查看任务状态
+        - "download_results" # 权限项：下载结果文件
+        - "submit_tasks" # 权限项：提交新任务
+        - "upload_files" # 权限项：上传文件
+    - name: "Editor" # 角色名称
+      permissions:
+        - "submit_tasks" # 权限项：提交新任务
+        - "upload_files" # 权限项：上传文件
+        - "view_task_status" # 权限项：查看任务状态
+    - name: "Viewer" # 角色名称
+      permissions:
+        - "view_task_status" # 权限项：查看任务状态
+        - "download_results" # 权限项：下载结果文件
+  default_role: "Viewer" # 未认证用户默认角色
+  require_confirmation:
+    - "delete_task_directory" # 需要二次确认的操作 删除任务文件夹
+    - "terminate_others_tasks" # 需要二次确认的操作
+
+monitor_interval: "5s" # 新增的监控间隔配置项

@@ -1,0 +1,22 @@
+{
+  "users": [
+    {
+      "username": "admin",
+      "password": "password",
+      "role": "Admin",
+      "createdTasks": []
+    },
+    {
+      "username": "editor",
+      "password": "password",
+      "role": "Editor",
+      "createdTasks": []
+    },
+    {
+      "username": "viewer",
+      "password": "password",
+      "role": "Viewer",
+      "createdTasks": []
+    }
+  ]
+}
