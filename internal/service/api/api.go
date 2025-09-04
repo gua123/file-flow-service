@@ -5,6 +5,13 @@ import (
 	"mime/multipart"
 )
 
+type Task struct {
+	ID     string
+	Dir    string
+	Cmd    string
+	Args   []string
+}
+
 type API struct {
 	service interfaces.Service
 }

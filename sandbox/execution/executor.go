@@ -9,8 +9,6 @@ import (
 	"file-flow-service/config"
 	"file-flow-service/utils/logger"
 	"file-flow-service/sandbox/environments"
-
-	"go.uber.org/zap"
 )
 
 // SandboxExecutor 沙盒执行器接口
@@ -87,16 +85,13 @@ func (se *sandboxExecutor) ExecuteTask(taskID, taskDir, cmd string, args []strin
 		return fmt.Errorf("沙盒执行器未初始化")
 	}
 	
-	se.logger.Info("开始执行任务", 
-		zap.String("task_id", taskID),
-		zap.String("command", cmd),
-		zap.String("environment", envType+"-"+envVersion))
+	se.logger.Info("开始执行任务")
 	
 	// 这里应该实现实际的任务执行逻辑
 	// 包括环境选择、沙盒隔离等
 	
 	// 示例实现：记录任务执行
-	se.logger.Info("任务执行完成", zap.String("task_id", taskID))
+	se.logger.Info("任务执行完成")
 	return nil
 }
 
@@ -117,9 +112,7 @@ func (se *sandboxExecutor) CreateTaskDirectory(taskID string) (string, error) {
 	// 记录任务目录
 	se.taskDirectories[taskID] = taskDir
 	
-	se.logger.Info("创建任务目录", 
-		zap.String("task_id", taskID),
-		zap.String("path", taskDir))
+	se.logger.Info("创建任务目录")
 	
 	return taskDir, nil
 }
@@ -145,9 +138,7 @@ func (se *sandboxExecutor) CleanupTaskDirectory(taskID string) error {
 	// 从记录中移除
 	delete(se.taskDirectories, taskID)
 	
-	se.logger.Info("清理任务目录", 
-		zap.String("task_id", taskID),
-		zap.String("path", taskDir))
+	se.logger.Info("清理任务目录")
 	
 	return nil
 }

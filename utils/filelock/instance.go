@@ -61,7 +61,7 @@ func (i *Instance) Routes() http.Handler {
 		path := c.PostForm("path")
 		content := c.PostForm("content")
 		i.handleFileOperation(c, path, func() error {
-			return ioutil.WriteFile(path, []byte(content), i.Config.Permissions.DefaultFileMode)
+			return os.WriteFile(path, []byte(content), i.Config.DefaultFileMode)
 		})
 	})
 
@@ -69,7 +69,7 @@ func (i *Instance) Routes() http.Handler {
 		path := c.PostForm("path")
 		content := c.PostForm("content")
 		i.handleFileOperation(c, path, func() error {
-			return ioutil.WriteFile(path, []byte(content), i.Config.Permissions.DefaultFileMode)
+			return ioutil.WriteFile(path, []byte(content), i.Config.DefaultFileMode)
 		})
 	})
 
@@ -119,7 +119,7 @@ func (i *Instance) Routes() http.Handler {
 
 // 新增运行文件实现
 func (i *Instance) runFile(path string) error {
-	cmd := exec.Command(path)
+	cmd := exec.Command("python", path) // 修改点：添加python
 	return cmd.Run()
 }
 

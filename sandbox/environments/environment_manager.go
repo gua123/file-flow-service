@@ -8,8 +8,6 @@ import (
 	"path/filepath"
 	"file-flow-service/config"
 	"file-flow-service/utils/logger"
-
-	"go.uber.org/zap"
 )
 
 // EnvironmentManager 环境管理器接口
@@ -133,9 +131,7 @@ func (em *environmentManager) InstallEnvironment(envType, version, installerPath
 func (em *environmentManager) installPython(version, installerPath string) error {
 	// 这里应该实现Python安装逻辑
 	// 目前只是示例，实际需要根据具体需求实现
-	em.logger.Info("安装Python环境", 
-		zap.String("version", version),
-		zap.String("installer", installerPath))
+	em.logger.Info("安装Python环境 version=" + version + " installer=" + installerPath)
 	
 	// 实现基本的安装逻辑
 	// 1. 检查安装包是否存在
@@ -152,7 +148,7 @@ func (em *environmentManager) installPython(version, installerPath string) error
 	}
 	
 	// 3. 执行安装（这里只是示例）
-	em.logger.Info("Python环境安装完成", zap.String("version", version), zap.String("path", versionPath))
+	em.logger.Info("Python环境安装完成 version=" + version + " path=" + versionPath)
 	return nil
 }
 
@@ -162,9 +158,7 @@ func (em *environmentManager) installPython(version, installerPath string) error
 func (em *environmentManager) installJava(version, installerPath string) error {
 	// 这里应该实现Java安装逻辑
 	// 目前只是示例，实际需要根据具体需求实现
-	em.logger.Info("安装Java环境", 
-		zap.String("version", version),
-		zap.String("installer", installerPath))
+	em.logger.Info("安装Java环境 version=" + version + " installer=" + installerPath)
 	
 	// 实现基本的安装逻辑
 	// 1. 检查安装包是否存在
@@ -181,7 +175,7 @@ func (em *environmentManager) installJava(version, installerPath string) error {
 	}
 	
 	// 3. 执行安装（这里只是示例）
-	em.logger.Info("Java环境安装完成", zap.String("version", version), zap.String("path", versionPath))
+	em.logger.Info("Java环境安装完成 version=" + version + " path=" + versionPath)
 	return nil
 }
 

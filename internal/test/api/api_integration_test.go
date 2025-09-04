@@ -1,18 +1,18 @@
 package api
-package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"file-flow-service/internal/service/api"
+	"file-flow-service/internal/test/testutils"
+	"file-flow-service/web"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
-	"bytes"
 	"testing"
+
 	"github.com/stretchr/testify/assert"
-	"file-flow-service/internal/test/testutils"
-	"file-flow-service/internal/service/api"
-	"file-flow-service/web"
 )
 
 type mockWebAPI struct {
@@ -66,10 +66,10 @@ func (m *mockWebAPI) DownloadFile(fileID string) (string, error) {
 
 func (m *mockWebAPI) GetHardwareStats() (*api.HardwareStats, error) {
 	return &api.HardwareStats{
-		CPU:        []float64{50.0},
-		Memory:     []int{1024 * 1024 * 1024},
-		Disk:       []int{100 * 1024 * 1024 * 1024},
-		Network:    []int{1024, 1024},
+		CPU:     []float64{50.0},
+		Memory:  []int{1024 * 1024 * 1024},
+		Disk:    []int{100 * 1024 * 1024 * 1024},
+		Network: []int{1024, 1024},
 	}, nil
 }
 

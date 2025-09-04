@@ -38,6 +38,7 @@ type AppConfig struct {
 	MonitorInterval      string               `yaml:"monitor_interval"`
 	Web                  Web                  `yaml:"web"`
 	Logging              Logging              `yaml:"logging"`
+	DefaultFileMode      os.FileMode          `yaml:"default_file_mode"`
 	History              []*ConfigSnapshot    `yaml:"-"`
 	current              *ConfigSnapshot
 	previous             *ConfigSnapshot

@@ -10,7 +10,6 @@ import (
 	"file-flow-service/utils/logger"
 	"file-flow-service/config"
 	"file-flow-service/internal/service/interfaces"
-	"go.uber.org/zap"
 )
 
 // RestartManager 热重启管理器
@@ -84,22 +83,22 @@ func (rm *RestartManager) Restart() error {
 	
 	// 1. 保存当前状态
 	if err := rm.saveCurrentState(); err != nil {
-		rm.logger.Error("保存当前状态失败", zap.Error(err))
+		rm.logger.Error("保存当前状态失败: " + err.Error())
 	}
 	
 	// 2. 优雅关闭所有模块
 	if err := rm.gracefulShutdown(); err != nil {
-		rm.logger.Error("优雅关闭失败", zap.Error(err))
+		rm.logger.Error("优雅关闭失败: " + err.Error())
 	}
 	
 	// 3. 重新加载配置
 	if err := rm.reloadConfiguration(); err != nil {
-		rm.logger.Error("重新加载配置失败", zap.Error(err))
+		rm.logger.Error("重新加载配置失败: " + err.Error())
 	}
 	
 	// 4. 重新初始化模块
 	if err := rm.reinitializeModules(); err != nil {
-		rm.logger.Error("重新初始化模块失败", zap.Error(err))
+		rm.logger.Error("重新初始化模块失败: " + err.Error())
 	}
 	
 	// 5. 完成重启
@@ -120,48 +119,48 @@ func (rm *RestartManager) GracefulShutdown() error {
 	
 	// 1. 保存当前状态
 	if err := rm.saveCurrentState(); err != nil {
-		rm.logger.Error("保存当前状态失败", zap.Error(err))
+		rm.logger.Error("保存当前状态失败: " + err.Error())
 	}
 	
 	// 2. 停止监控
 	if err := rm.stopMonitoring(); err != nil {
-		rm.logger.Error("停止监控失败", zap.Error(err))
+		rm.logger.Error("停止监控失败: " + err.Error())
 		return err
 	}
 	
 	// 3. 停止任务执行器
 	if err := rm.stopExecutor(); err != nil {
-		rm.logger.Error("停止执行器失败", zap.Error(err))
+		rm.logger.Error("停止执行器失败: " + err.Error())
 		return err
 	}
 	
 	// 4. 停止线程池
 	if err := rm.stopThreadPool(); err != nil {
-		rm.logger.Error("停止线程池失败", zap.Error(err))
+		rm.logger.Error("停止线程池失败: " + err.Error())
 		return err
 	}
 	
 	// 5. 停止沙箱执行器
 	if err := rm.stopSandboxExecutor(); err != nil {
-		rm.logger.Error("停止沙箱执行器失败", zap.Error(err))
+		rm.logger.Error("停止沙箱执行器失败: " + err.Error())
 		return err
 	}
 	
 	// 6. 停止Web服务
 	if err := rm.stopWebServer(); err != nil {
-		rm.logger.Error("停止Web服务失败", zap.Error(err))
+		rm.logger.Error("停止Web服务失败: " + err.Error())
 		return err
 	}
 	
 	// 7. 停止日志系统
 	if err := rm.stopLogger(); err != nil {
-		rm.logger.Error("停止日志系统失败", zap.Error(err))
+		rm.logger.Error("停止日志系统失败: " + err.Error())
 		return err
 	}
 	
 	// 8. 保存最终状态
 	if err := rm.saveFinalState(); err != nil {
-		rm.logger.Error("保存最终状态失败", zap.Error(err))
+		rm.logger.Error("保存最终状态失败: " + err.Error())
 		return err
 	}
 	
@@ -178,17 +177,17 @@ func (rm *RestartManager) ForceShutdown() error {
 	
 	// 1. 强制终止所有进程
 	if err := rm.forceTerminateProcesses(); err != nil {
-		rm.logger.Error("强制终止进程失败", zap.Error(err))
+		rm.logger.Error("强制终止进程失败: " + err.Error())
 	}
 	
 	// 2. 强制停止所有模块
 	if err := rm.forceStopModules(); err != nil {
-		rm.logger.Error("强制停止模块失败", zap.Error(err))
+		rm.logger.Error("强制停止模块失败: " + err.Error())
 	}
 	
 	// 3. 清理资源
 	if err := rm.cleanupResources(); err != nil {
-		rm.logger.Error("清理资源失败", zap.Error(err))
+		rm.logger.Error("清理资源失败: " + err.Error())
 	}
 	
 	rm.logger.Info("强制关闭完成")
@@ -209,16 +208,13 @@ func (rm *RestartManager) saveCurrentState() error {
 	
 	// 保存当前配置快照
 	if rm.config != nil {
-		rm.logger.Info("保存配置快照", 
-			zap.String("monitor_interval", rm.config.MonitorInterval),
-			zap.Int("max_workers", rm.config.Threadpool.MaxWorkers))
+		rm.logger.Info("保存配置快照 monitor_interval=" + rm.config.MonitorInterval + " max_workers=" + string(rm.config.Threadpool.MaxWorkers))
 	}
 	
 	// 保存服务状态
 	if rm.service != nil {
 		status := rm.service.GetExecutorStatus()
-		rm.logger.Info("保存服务状态",
-			zap.String("executor_status", status))
+		rm.logger.Info("保存服务状态 executor_status=" + status)
 	}
 	
 	return nil
@@ -247,37 +243,37 @@ func (rm *RestartManager) gracefulShutdown() error {
 	
 	// 1. 停止监控
 	if err := rm.stopMonitoring(); err != nil {
-		rm.logger.Error("停止监控失败", zap.Error(err))
+		rm.logger.Error("停止监控失败: " + err.Error())
 		return err
 	}
 	
 	// 2. 停止任务执行器
 	if err := rm.stopExecutor(); err != nil {
-		rm.logger.Error("停止执行器失败", zap.Error(err))
+		rm.logger.Error("停止执行器失败: " + err.Error())
 		return err
 	}
 	
 	// 3. 停止线程池
 	if err := rm.stopThreadPool(); err != nil {
-		rm.logger.Error("停止线程池失败", zap.Error(err))
+		rm.logger.Error("停止线程池失败: " + err.Error())
 		return err
 	}
 	
 	// 4. 停止沙箱执行器
 	if err := rm.stopSandboxExecutor(); err != nil {
-		rm.logger.Error("停止沙箱执行器失败", zap.Error(err))
+		rm.logger.Error("停止沙箱执行器失败: " + err.Error())
 		return err
 	}
 	
 	// 5. 停止Web服务
 	if err := rm.stopWebServer(); err != nil {
-		rm.logger.Error("停止Web服务失败", zap.Error(err))
+		rm.logger.Error("停止Web服务失败: " + err.Error())
 		return err
 	}
 	
 	// 6. 停止日志系统
 	if err := rm.stopLogger(); err != nil {
-		rm.logger.Error("停止日志系统失败", zap.Error(err))
+		rm.logger.Error("停止日志系统失败: " + err.Error())
 		return err
 	}
 	
@@ -295,7 +291,7 @@ func (rm *RestartManager) reloadConfiguration() error {
 	// 重新加载配置文件
 	configPath := "config/config.yaml"
 	if err := config.InitConfig(configPath); err != nil {
-		rm.logger.Error("重新加载配置失败", zap.Error(err))
+		rm.logger.Error("重新加载配置失败: " + err.Error())
 		return err
 	}
 	
@@ -319,7 +315,7 @@ func (rm *RestartManager) reinitializeModules() error {
 		// 重新启动执行器
 		status := rm.service.GetExecutorStatus()
 		if status != "" {
-			rm.logger.Error("重新初始化执行器失败", zap.String("status", status))
+			rm.logger.Error("重新初始化执行器失败 status=" + status)
 			return fmt.Errorf("执行器初始化失败: %s", status)
 		}
 		rm.logger.Info("执行器重新初始化完成")
@@ -330,7 +326,7 @@ func (rm *RestartManager) reinitializeModules() error {
 		// 重新启动任务管理器
 		_, err := rm.service.GetTaskStats()
 		if err != nil {
-			rm.logger.Error("重新初始化任务管理器失败", zap.Error(err))
+			rm.logger.Error("重新初始化任务管理器失败: " + err.Error())
 			return err
 		}
 		rm.logger.Info("任务管理器重新初始化完成")
@@ -341,7 +337,7 @@ func (rm *RestartManager) reinitializeModules() error {
 		// 重新启动进程管理器
 		_, err := rm.service.GetSystemInfo()
 		if err != nil {
-			rm.logger.Error("重新初始化进程管理器失败", zap.Error(err))
+			rm.logger.Error("重新初始化进程管理器失败: " + err.Error())
 			return err
 		}
 		rm.logger.Info("进程管理器重新初始化完成")

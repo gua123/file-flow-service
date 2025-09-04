@@ -1,127 +1,82 @@
 package web
 
 import (
-	"encoding/json"
 	"file-flow-service/internal/service"
-	"file-flow-service/internal/service/api"
-	"net/http"
-
-	"github.com/go-chi/chi"
 	"file-flow-service/utils/logger"
+	"net/http"
+	"encoding/json"
 )
 
-type webInterface struct {
-	logger  *logger.Logger
+type WebInterface struct {
+	logger logger.Logger
 	service *service.Service
-	// other fields
 }
 
-// sendErrorResponse 发送错误响应
-// 用于统一处理错误响应，避免代码重复
-func (w *webInterface) sendErrorResponse(writer http.ResponseWriter, code int, message string) {
-	w.logger.LogError(message)
-	w.sendJSONResponse(writer, code, message, nil)
+func NewWebInterface(service *service.Service, logger logger.Logger) *WebInterface {
+	return &WebInterface{
+		service: service,
+		logger:  logger,
+	}
 }
 
-// sendJSONResponse 发送JSON响应
-func (w *webInterface) sendJSONResponse(writer http.ResponseWriter, code int, message string, data interface{}) {
-	writer.Header().Set("Content-Type", "application/json")
-	writer.WriteHeader(code)
-	response := map[string]interface{}{
-		"message": message,
-		"data":    data,
-	}
-	json.NewEncoder(writer).Encode(response)
+func (w *WebInterface) SetupAllRoutes() http.Handler {
+	http.HandleFunc("/api/upload", w.HandleUpload)
+	http.HandleFunc("/api/execute", w.HandleExecute)
+	http.HandleFunc("/api/status", w.HandleStatus)
+	return nil
 }
 
-// UpdateTaskHandler 处理更新任务请求
-func (w *webInterface) UpdateTaskHandler(writer http.ResponseWriter, r *http.Request) {
-	taskID := chi.URLParam(r, "taskID")
-	if taskID == "" {
-		w.sendErrorResponse(writer, http.StatusBadRequest, "任务ID不能为空")
-		return
-	}
-	var req api.UpdateTaskRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.sendErrorResponse(writer, http.StatusBadRequest, "无效的请求体: "+err.Error())
-		return
-	}
-	if err := w.service.UpdateTask(taskID, req); err != nil {
-		w.sendErrorResponse(writer, http.StatusInternalServerError, err.Error())
-		return
-	}
-	w.sendJSONResponse(writer, http.StatusOK, "任务更新成功", nil)
-}
-
-// DeleteTaskHandler 处理删除任务请求
-func (w *webInterface) DeleteTaskHandler(writer http.ResponseWriter, r *http.Request) {
-	taskID := chi.URLParam(r, "taskID")
-	if taskID == "" {
-		w.sendErrorResponse(writer, http.StatusBadRequest, "任务ID不能为空")
-		return
-	}
-	if err := w.service.DeleteTask(taskID); err != nil {
-		w.sendErrorResponse(writer, http.StatusInternalServerError, err.Error())
-		return
-	}
-	w.sendJSONResponse(writer, http.StatusOK, "任务删除成功", nil)
-}
-
-// GetLogsHandler 处理获取日志请求
-func (w *webInterface) GetLogsHandler(writer http.ResponseWriter, r *http.Request) {
-	logType := r.URL.Query().Get("logType")
-	since := r.URL.Query().Get("since") // 同步修改参数名保持一致性
-	if logType == "" || since == "" {
-		w.sendErrorResponse(writer, http.StatusBadRequest, "缺少日志类型或时间范围参数")
-		return
-	}
-	logs, err := w.service.GetLogs(logType, since)
+func (w *WebInterface) HandleUpload(rw http.ResponseWriter, r *http.Request) {
+	file, fileHeader, err := r.FormFile("file")
 	if err != nil {
-		w.sendErrorResponse(writer, http.StatusBadRequest, err.Error())
+		w.logger.Error("文件上传失败: " + err.Error())
+		http.Error(rw, "上传失败", http.StatusBadRequest)
 		return
 	}
-	w.sendJSONResponse(writer, http.StatusOK, "日志获取成功", logs)
-}
+	defer file.Close()
 
-// GetProcessListHandler 处理获取进程列表请求
-func (w *webInterface) GetProcessListHandler(writer http.ResponseWriter, r *http.Request) {
-	processes, err := w.service.GetProcessList()
+	fileName, err := w.service.UploadFile(fileHeader)
 	if err != nil {
-		w.sendErrorResponse(writer, http.StatusInternalServerError, err.Error())
+		w.logger.Error("文件上传处理失败: " + err.Error())
+		http.Error(rw, "文件处理失败", http.StatusInternalServerError)
 		return
 	}
-	w.sendJSONResponse(writer, http.StatusOK, "进程列表获取成功", processes)
+
+	w.WriteJSON(rw, map[string]string{"file": fileName})
 }
 
-// UpdateConfigHandler 处理更新配置请求
-func (w *webInterface) UpdateConfigHandler(writer http.ResponseWriter, r *http.Request) {
-	type ConfigUpdateRequest struct {
-		Key   string `json:"key"`
-		Value string `json:"value"`
-	}
-	var req ConfigUpdateRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.sendErrorResponse(writer, http.StatusBadRequest, "无效的请求体")
+func (w *WebInterface) HandleExecute(rw http.ResponseWriter, r *http.Request) {
+	cmd := r.FormValue("cmd")
+	args := r.FormValue("args")
+	if cmd == "" {
+		w.logger.Error("命令参数缺失")
+		http.Error(rw, "缺少命令", http.StatusBadRequest)
 		return
 	}
-	if err := w.service.UpdateConfig(req.Key, req.Value); err != nil {
-		w.sendErrorResponse(writer, http.StatusInternalServerError, err.Error())
-		return
-	}
-	w.sendJSONResponse(writer, http.StatusOK, "配置更新成功", nil)
-}
 
-// DownloadFileHandler 处理文件下载请求
-func (w *webInterface) DownloadFileHandler(writer http.ResponseWriter, r *http.Request) {
-	fileID := chi.URLParam(r, "fileID")
-	if fileID == "" {
-		w.sendErrorResponse(writer, http.StatusBadRequest, "文件ID不能为空")
-		return
-	}
-	filePath, err := w.service.DownloadFile(fileID)
+	err := w.service.ExecuteCommand(cmd, []string{args})
 	if err != nil {
-		w.sendErrorResponse(writer, http.StatusInternalServerError, err.Error())
+		w.logger.Error("命令执行失败: " + err.Error())
+		http.Error(rw, "命令执行失败", http.StatusInternalServerError)
 		return
 	}
-	w.sendJSONResponse(writer, http.StatusOK, "文件下载成功", map[string]string{"path": filePath})
+
+	w.WriteJSON(rw, map[string]string{"status": "success"})
+}
+
+func (w *WebInterface) HandleStatus(rw http.ResponseWriter, r *http.Request) {
+	status := w.service.GetStatus()
+	w.WriteJSON(rw, map[string]string{"status": status})
+}
+
+func (w *WebInterface) WriteJSON(rw http.ResponseWriter, data interface{}) {
+	rw.Header().Set("Content-Type", "application/json")
+
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		http.Error(rw, "内部错误", http.StatusInternalServerError)
+		return
+	}
+
+	rw.Write(jsonData)
 }

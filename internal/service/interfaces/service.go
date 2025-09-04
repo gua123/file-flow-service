@@ -8,6 +8,11 @@ type UpdateTaskRequest struct {
 }
 
 type Service interface {
+	GracefulShutdown()
+	UploadFile(file *multipart.FileHeader) (string, error)
+	ExecuteCommand(cmd string, args []string) error
+	GetCommandHelp() string
+	GetStatus() string
 	UpdateTask(taskID string, req UpdateTaskRequest) error
 	DeleteTask(taskID string) error
 	GetLogs(logType string, since string) ([]string, error)
@@ -18,15 +23,23 @@ type Service interface {
 	GetSystemInfo() (*SystemInfo, error)
 	GetTaskStats() (*TaskStats, error)
 	GetThreadPoolStats() (*ThreadPoolStats, error)
-	UploadFile(file *multipart.FileHeader) (string, error)
-	ExecuteCommand(cmd string, args []string) error
-	GetCommandHelp() string
-	GetStatus() string
 	GetExecutorStatus() string
 	GetConfigList() []map[string]string
 }
 
-// ProcessInfo is used by GetProcessList
+type TaskInterface interface {
+	GetID() string
+	GetStatus() string
+	SetStatus(status string)
+	Execute() error
+	GetStartTime() int64
+	SetStartTime(startTime int64)
+	GetDuration() int64
+	SetDuration(duration int64)
+	GetFinishedAt() int64
+	SetFinishedAt(finishTime int64)
+}
+
 type ProcessInfo struct {
 	ID       string
 	Name     string
@@ -35,14 +48,12 @@ type ProcessInfo struct {
 	StartTime string
 }
 
-// HardwareStats contains system hardware metrics
 type HardwareStats struct {
 	CPUUsage   float64
 	MemoryUsed uint64
 	DiskUsed   uint64
 }
 
-// SystemInfo contains system information
 type SystemInfo struct {
 	OS        string
 	Arch      string
@@ -51,7 +62,6 @@ type SystemInfo struct {
 	BootTime  int64
 }
 
-// TaskStats contains task execution metrics
 type TaskStats struct {
 	TotalTasks     int     `json:"total_tasks"`
 	ActiveTasks    int     `json:"active_tasks"`
@@ -64,10 +74,58 @@ type TaskStats struct {
 	Timestamp      int64   `json:"timestamp"`
 }
 
-// ThreadPoolStats contains thread pool metrics
 type ThreadPoolStats struct {
-	TotalPoolSize  int
-	ActiveThreads  int
-	QueueSize      int
+	TotalTasks     int
+	ActiveTasks    int
 	CompletedTasks int
+}
+
+type Task struct {
+	ID        string    `json:"id"`
+	Name      string    `json:"name"`
+	Status    string    `json:"status"`
+	StartedAt int64     `json:"started_at"`
+	FinishedAt int64    `json:"finished_at"`
+	Duration  int64     `json:"duration"`
+	Logs      []string  `json:"logs"`
+}
+
+func (t *Task) GetID() string {
+	return t.ID
+}
+
+func (t *Task) GetStatus() string {
+	return t.Status
+}
+
+func (t *Task) SetStatus(status string) {
+	t.Status = status
+}
+
+func (t *Task) Execute() error {
+	return nil
+}
+
+func (t *Task) GetStartTime() int64 {
+	return t.StartedAt
+}
+
+func (t *Task) SetStartTime(startTime int64) {
+	t.StartedAt = startTime
+}
+
+func (t *Task) GetDuration() int64 {
+	return t.Duration
+}
+
+func (t *Task) SetDuration(duration int64) {
+	t.Duration = duration
+}
+
+func (t *Task) GetFinishedAt() int64 {
+	return t.FinishedAt
+}
+
+func (t *Task) SetFinishedAt(finishTime int64) {
+	t.FinishedAt = finishTime
 }
