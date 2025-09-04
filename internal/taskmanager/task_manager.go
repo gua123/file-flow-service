@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"sync"
 	"time"
-	"file-flow-service/internal/service/api"
+	"file-flow-service/internal/service/interfaces"
 	"file-flow-service/internal/threadpool"
 	"file-flow-service/utils/logger"
 	"file-flow-service/config"
@@ -49,8 +49,8 @@ type TaskStats struct {
 // ConvertToAPITaskStats 转换为API任务统计信息
 // 参数：无
 // 返回：API任务统计信息
-func (ts *TaskStats) ConvertToAPITaskStats() *api.TaskStats {
-	return &api.TaskStats{
+func (ts *TaskStats) ConvertToAPITaskStats() *interfaces.TaskStats {
+	return &interfaces.TaskStats{
 		TotalTasks:     ts.TotalTasks,
 		ActiveTasks:    ts.ActiveTasks,
 		CompletedTasks: ts.CompletedTasks,

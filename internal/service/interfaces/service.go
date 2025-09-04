@@ -1,14 +1,10 @@
 package interfaces
 
-import (
-	"time"
-	"mime/multipart"
-)
+import "mime/multipart"
 
-var GlobalService Service
-
-func GetService() Service {
-	return GlobalService
+type UpdateTaskRequest struct {
+	Name   string
+	Status string
 }
 
 type Service interface {
@@ -30,76 +26,48 @@ type Service interface {
 	GetConfigList() []map[string]string
 }
 
-type UpdateTaskRequest struct {
-	Name   string `json:"name"`
-	Status string `json:"status"`
-}
-
-type CreateTaskRequest struct {
-	Name string `json:"name"`
-}
-
+// ProcessInfo is used by GetProcessList
 type ProcessInfo struct {
-	PID        int
-	Name       string
-	CPUUsage   float64
-	Memory     int
-	MemoryUsage float64
-	Status     string
-	CmdLine    string
+	ID       string
+	Name     string
+	CPU      float64
+	Memory   uint64
+	StartTime string
 }
 
-type Task struct {
-	ID          string
-	Name        string
-	Description string
-	Status      string
-	Progress    int
-	CreatedAt   time.Time
-	Creator     string
-	AssignedTo  string
-	ResultPath  string
-	Cmd         string
-	Args        []string
-	Dir         string
-}
-
+// HardwareStats contains system hardware metrics
 type HardwareStats struct {
-	CPU       []float64
-	Memory    []int
-	Disk      []int
-	Network   []int
-	CPUUsage  float64 // Required by monitor
-	MemoryUsed int    // Required by monitor
-	MemoryTotal int   // Required by monitor
-	MemoryFree int    // Required by monitor
-	MemoryUsage float64 // Required by monitor
+	CPUUsage   float64
+	MemoryUsed uint64
+	DiskUsed   uint64
 }
 
+// SystemInfo contains system information
 type SystemInfo struct {
-	Hostname     string
-	OS           string
-	Architecture string
-	Kernel       string
+	OS        string
+	Arch      string
+	Hostname  string
+	Users     int
+	BootTime  int64
 }
 
+// TaskStats contains task execution metrics
 type TaskStats struct {
-	Active      int
-	Completed   int
-	Failed      int
-	Running     int
-	TotalTasks  int   // Required by taskmanager
-	ActiveTasks int   // Required by taskmanager
-	CompletedTasks int  // Required by taskmanager
-	FailedTasks int    // Required by taskmanager
-	QueueLength int    // Required by monitor
-	ActiveWorkers int  // Required by monitor
+	TotalTasks     int     `json:"total_tasks"`
+	ActiveTasks    int     `json:"active_tasks"`
+	CompletedTasks int     `json:"completed_tasks"`
+	FailedTasks    int     `json:"failed_tasks"`
+	CPUUsage       float64 `json:"cpu_usage"`
+	MemoryUsage    uint64  `json:"memory_usage"`
+	QueueLength    int     `json:"queue_length"`
+	ActiveWorkers  int     `json:"active_workers"`
+	Timestamp      int64   `json:"timestamp"`
 }
 
+// ThreadPoolStats contains thread pool metrics
 type ThreadPoolStats struct {
-	ActiveWorkers  int
-	QueueLength    int
-	TotalTasks     int
-	FailedTasks    int
+	TotalPoolSize  int
+	ActiveThreads  int
+	QueueSize      int
 	CompletedTasks int
 }

@@ -9,7 +9,7 @@ import (
 	"sync"
 	"file-flow-service/utils/logger"
 	"file-flow-service/config"
-	"file-flow-service/internal/service/api"
+	"file-flow-service/internal/service/interfaces"
 	"go.uber.org/zap"
 )
 
@@ -23,14 +23,14 @@ type RestartManager struct {
 	restartChan chan struct{}
 	ctx        context.Context
 	cancel     context.CancelFunc
-	service    api.Service
+	service    interfaces.Service
 }
 
 // NewRestartManager 创建热重启管理器
 // 参数：config 配置对象, logger 日志记录器, service 服务实例
 // 返回：热重启管理器实例
 // 上下承接关系：初始化重启管理器结构体，创建上下文
-func NewRestartManager(config *config.AppConfig, logger logger.Logger, service api.Service) *RestartManager {
+func NewRestartManager(config *config.AppConfig, logger logger.Logger, service interfaces.Service) *RestartManager {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &RestartManager{
 		config:      config,
@@ -216,8 +216,9 @@ func (rm *RestartManager) saveCurrentState() error {
 	
 	// 保存服务状态
 	if rm.service != nil {
+		status := rm.service.GetExecutorStatus()
 		rm.logger.Info("保存服务状态",
-			zap.String("executor_status", rm.service.GetExecutorStatus()))
+			zap.String("executor_status", status))
 	}
 	
 	return nil
@@ -316,9 +317,10 @@ func (rm *RestartManager) reinitializeModules() error {
 	// 1. 重新初始化执行器
 	if rm.service != nil {
 		// 重新启动执行器
-		if err := rm.service.GetExecutorStatus(); err != nil {
-			rm.logger.Error("重新初始化执行器失败", zap.Error(err))
-			return err
+		status := rm.service.GetExecutorStatus()
+		if status != "" {
+			rm.logger.Error("重新初始化执行器失败", zap.String("status", status))
+			return fmt.Errorf("执行器初始化失败: %s", status)
 		}
 		rm.logger.Info("执行器重新初始化完成")
 	}
@@ -326,7 +328,8 @@ func (rm *RestartManager) reinitializeModules() error {
 	// 2. 重新初始化任务管理器
 	if rm.service != nil {
 		// 重新启动任务管理器
-		if err := rm.service.GetTaskStats(); err != nil {
+		_, err := rm.service.GetTaskStats()
+		if err != nil {
 			rm.logger.Error("重新初始化任务管理器失败", zap.Error(err))
 			return err
 		}
@@ -336,7 +339,8 @@ func (rm *RestartManager) reinitializeModules() error {
 	// 3. 重新初始化进程管理器
 	if rm.service != nil {
 		// 重新启动进程管理器
-		if err := rm.service.GetSystemInfo(); err != nil {
+		_, err := rm.service.GetSystemInfo()
+		if err != nil {
 			rm.logger.Error("重新初始化进程管理器失败", zap.Error(err))
 			return err
 		}

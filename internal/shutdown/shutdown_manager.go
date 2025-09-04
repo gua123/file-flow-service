@@ -8,8 +8,8 @@ import (
 	"time"
 	"file-flow-service/utils/logger"
 	"file-flow-service/config"
-	"file-flow-service/internal/service"
-	
+	"file-flow-service/internal/service/interfaces"
+
 	"go.uber.org/zap"
 )
 
@@ -208,7 +208,7 @@ func (sm *ShutdownManager) gracefulShutdownModules() error {
 			if sm.service != nil && sm.service.Executor != nil {
 				// 这里可以调用沙箱执行器的关闭方法
 				sm.logger.Info("沙箱执行器关闭完成")
-			}
+			)
 			
 		case "executor":
 			// 执行器关闭逻辑
@@ -219,7 +219,7 @@ func (sm *ShutdownManager) gracefulShutdownModules() error {
 				} else {
 					sm.logger.Info("执行器关闭完成")
 				}
-			}
+			)
 			
 		case "threadpool":
 			// 线程池关闭逻辑
@@ -229,7 +229,7 @@ func (sm *ShutdownManager) gracefulShutdownModules() error {
 					pool.Stop()
 					sm.logger.Info("线程池关闭完成")
 				}
-			}
+			)
 			
 		case "monitor":
 			// 监控模块关闭逻辑
@@ -289,7 +289,7 @@ func (sm *ShutdownManager) forceShutdownModules() error {
 				} else {
 					sm.logger.Warn("执行器强制关闭完成")
 				}
-			}
+			)
 			
 		case "threadpool":
 			// 线程池强制关闭逻辑
@@ -299,7 +299,7 @@ func (sm *ShutdownManager) forceShutdownModules() error {
 					pool.Stop()
 					sm.logger.Warn("线程池强制关闭完成")
 				}
-			}
+			)
 			
 		case "monitor":
 			// 监控模块强制关闭逻辑

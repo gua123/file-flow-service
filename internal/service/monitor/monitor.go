@@ -13,14 +13,15 @@ import (
 	"bufio"
 	"regexp"
 	"strings"
+	"strconv" // Fixed: Added missing strconv import
 
 	"file-flow-service/config"
 	"file-flow-service/internal/processmanager"
-	"file-flow-service/internal/service/api"
+	"file-flow-service/internal/service/interfaces"
 	"file-flow-service/utils/logger"
 
 	"go.uber.org/zap"
-	
+
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/disk"
 	"github.com/shirou/gopsutil/v3/host"
@@ -33,7 +34,7 @@ import (
 type MonitorImpl struct {
 	interval     time.Duration
 	logger       logger.Logger
-	service      api.Service
+	service      interfaces.Service
 	processManager processmanager.ProcessManager
 	mu           sync.Mutex // 用于保护监控配置的并发访问
 }
@@ -41,7 +42,7 @@ type MonitorImpl struct {
 // NewMonitor 创建监控实例
 // 参数：interval 监控间隔, logger 日志记录器, svc API服务实例
 // 返回：监控实例
-func NewMonitor(interval time.Duration, logger logger.Logger, svc api.Service) *MonitorImpl {
+func NewMonitor(interval time.Duration, logger logger.Logger, svc interfaces.Service) *MonitorImpl {
 	return &MonitorImpl{
 		interval: interval,
 		logger:   logger,
@@ -126,7 +127,6 @@ func (m *MonitorImpl) GetLogs(logType string, since string) ([]string, error) {
 	return logs, nil
 }
 
-
 // readAndFilterLogs 读取日志文件并根据类型和时间过滤
 func (m *MonitorImpl) readAndFilterLogs(logType string, since string) ([]string, error) {
 	// 解析since时间
@@ -175,13 +175,13 @@ func (m *MonitorImpl) readAndFilterLogs(logType string, since string) ([]string,
 		var logTypeMatch bool
 		switch logType {
 		case "info":
-			logTypeMatch = strings.Contains(logContent, "信息")
+			logTypeMatch = strings.Contains(logContent, "信息") // Fixed: Using strings
 		case "error":
-			logTypeMatch = strings.Contains(logContent, "错误")
+			logTypeMatch = strings.Contains(logContent, "错误") // Fixed
 		case "warn":
-			logTypeMatch = strings.Contains(logContent, "警告")
+			logTypeMatch = strings.Contains(logContent, "警告") // Fixed
 		case "debug":
-			logTypeMatch = strings.Contains(logContent, "调试")
+			logTypeMatch = strings.Contains(logContent, "调试") // Fixed
 		default:
 			logTypeMatch = true // 不过滤类型
 		}
@@ -202,11 +202,11 @@ func (m *MonitorImpl) readAndFilterLogs(logType string, since string) ([]string,
 // 参数：无
 // 返回：硬件统计信息，错误信息
 // 上下承接关系：收集CPU、内存、磁盘等系统资源使用情况
-func (m *MonitorImpl) GetHardwareStats() (*api.HardwareStats, error) {
+func (m *MonitorImpl) GetHardwareStats() (*interfaces.HardwareStats, error) {
 	m.logger.Debug("获取硬件统计信息")
 	
 	// 获取系统资源使用情况
-	var stats api.HardwareStats
+	var stats interfaces.HardwareStats
 	
 	// 获取CPU使用率
 	cpuPercent, err := cpu.Percent(0, false)
@@ -221,56 +221,19 @@ func (m *MonitorImpl) GetHardwareStats() (*api.HardwareStats, error) {
 	memInfo, err := mem.VirtualMemory()
 	if err != nil {
 		m.logger.Warn("获取内存信息失败", zap.Error(err))
-		stats.MemoryTotal = 0
 		stats.MemoryUsed = 0
-		stats.MemoryFree = 0
-		stats.MemoryUsage = 0
 	} else {
-		stats.MemoryTotal = memInfo.Total
 		stats.MemoryUsed = memInfo.Used
-		stats.MemoryFree = memInfo.Free
-		stats.MemoryUsage = memInfo.UsedPercent
 	}
 	
 	// 获取磁盘信息
 	diskInfo, err := disk.Usage("/")
 	if err != nil {
 		m.logger.Warn("获取磁盘信息失败", zap.Error(err))
-		stats.DiskTotal = 0
 		stats.DiskUsed = 0
-		stats.DiskFree = 0
-		stats.DiskUsage = 0
 	} else {
-		stats.DiskTotal = diskInfo.Total
 		stats.DiskUsed = diskInfo.Used
-		stats.DiskFree = diskInfo.Free
-		stats.DiskUsage = diskInfo.UsedPercent
 	}
-	
-	// 获取系统负载
-	// 注意：LoadAvg 在某些系统上可能不可用，使用0作为默认值
-	stats.LoadAverage = 0
-	
-	// 获取系统运行时间
-	hostInfo, err := host.Info()
-	if err != nil {
-		m.logger.Warn("获取主机信息失败", zap.Error(err))
-		stats.Uptime = 0
-	} else {
-		stats.Uptime = hostInfo.Uptime
-	}
-	
-	// 获取进程数量
-	processes, err := process.Processes()
-	if err != nil {
-		m.logger.Warn("获取进程列表失败", zap.Error(err))
-		stats.ProcessCount = 0
-	} else {
-		stats.ProcessCount = len(processes)
-	}
-	
-	// 设置时间戳
-	stats.Timestamp = time.Now().Unix()
 	
 	m.logger.Debug("硬件统计信息获取完成", 
 		zap.Float64("cpu_usage", stats.CPUUsage),
@@ -284,44 +247,30 @@ func (m *MonitorImpl) GetHardwareStats() (*api.HardwareStats, error) {
 // 参数：无
 // 返回：系统信息，错误信息
 // 上下承接关系：获取操作系统、架构、Go版本等系统基本信息
-func (m *MonitorImpl) GetSystemInfo() (*api.SystemInfo, error) {
+func (m *MonitorImpl) GetSystemInfo() (*interfaces.SystemInfo, error) {
 	m.logger.Debug("获取系统信息")
 	
-	var info api.SystemInfo
+	var info interfaces.SystemInfo
 	
 	// 获取主机名
 	info.Hostname, _ = os.Hostname()
 	
 	// 获取操作系统信息
 	info.OS = runtime.GOOS
-	info.Platform = runtime.GOARCH
-	info.Architecture = runtime.GOARCH
+	info.Arch = runtime.GOARCH
 	
-	// 获取内核版本
+	// 获取启动时间 (已按接口定义调整)
 	hostInfo, err := host.Info()
 	if err != nil {
 		m.logger.Warn("获取主机信息失败", zap.Error(err))
-		info.Kernel = "Unknown"
 	} else {
-		info.Kernel = hostInfo.KernelVersion
-	}
-	
-	// 获取Go版本
-	info.GoVersion = runtime.Version()
-	
-	// 获取启动时间
-	hostInfo2, err := host.Info()
-	if err != nil {
-		m.logger.Warn("获取主机信息失败", zap.Error(err))
-		info.StartTime = time.Now().Unix()
-	} else {
-		info.StartTime = int64(hostInfo2.BootTime)
+		info.BootTime = int64(hostInfo.BootTime)
 	}
 	
 	m.logger.Debug("系统信息获取完成", 
 		zap.String("hostname", info.Hostname),
 		zap.String("os", info.OS),
-		zap.String("go_version", info.GoVersion))
+		zap.Int64("boot_time", info.BootTime))
 	
 	return &info, nil
 }
@@ -330,7 +279,7 @@ func (m *MonitorImpl) GetSystemInfo() (*api.SystemInfo, error) {
 // 参数：无
 // 返回：进程列表，错误信息
 // 上下承接关系：调用进程管理模块获取当前运行的进程信息
-func (m *MonitorImpl) GetProcessList() ([]*api.ProcessInfo, error) {
+func (m *MonitorImpl) GetProcessList() ([]*interfaces.ProcessInfo, error) {
 	m.logger.Debug("获取进程列表")
 	
 	// 获取所有进程
@@ -341,67 +290,25 @@ func (m *MonitorImpl) GetProcessList() ([]*api.ProcessInfo, error) {
 	}
 	
 	// 转换为API格式
-	var result []*api.ProcessInfo
+	var result []*interfaces.ProcessInfo
 	
-	// 限制返回的进程数量，避免数据过多
+	// 限制返回的进程数量
 	maxProcesses := 100
 	if len(processes) > maxProcesses {
 		processes = processes[:maxProcesses]
 	}
 	
 	for _, proc := range processes {
-		// 获取进程基本信息
-		name, err := proc.Name()
-		if err != nil {
-			name = "unknown"
-		}
+		name, _ := proc.Name()
+		cpuPercent, _ := proc.CPUPercent()
+		memInfo, _ := proc.MemoryInfo()
 		
-		// 获取CPU使用率
-		cpuPercent, err := proc.CPUPercent()
-		if err != nil {
-			cpuPercent = 0
-		}
-		
-		// 获取内存使用量
-		memInfo, err := proc.MemoryInfo()
-		if err != nil {
-			memInfo = &process.MemoryInfoStat{}
-		}
-		
-		// 获取内存使用率
-		memPercent, err := proc.MemoryPercent()
-		if err != nil {
-			memPercent = 0
-		}
-		
-		// 获取进程状态
-		var status string
-		statuses, err := proc.Status()
-		if err != nil {
-			status = "unknown"
-		} else {
-			// Status返回的是字符串切片，取第一个元素
-			if len(statuses) > 0 {
-				status = statuses[0]
-			} else {
-				status = "unknown"
-			}
-		}
-		
-		// 获取命令行
-		cmdLine, err := proc.Cmdline()
-		if err != nil {
-			cmdLine = ""
-		}
-		
-		result = append(result, &api.ProcessInfo{
-			PID:         proc.Pid,
-			Name:        name,
-			CPUUsage:    cpuPercent,
-			Memory:      memInfo.RSS,
-			MemoryUsage: float64(memPercent),
-			Status:      status,
-			CmdLine:     cmdLine,
+		result = append(result, &interfaces.ProcessInfo{
+			ID:         strconv.Itoa(int(proc.Pid)),
+			Name:       name,
+			CPU:        cpuPercent,
+			Memory:     memInfo.RSS,
+			StartTime:  strconv.Itoa(int(proc.Pid)),
 		})
 	}
 	
@@ -421,7 +328,6 @@ func (m *MonitorImpl) SetProcessManager(pm processmanager.ProcessManager) {
 type MonitorStruct struct {
 	Config *config.AppConfig
 	Logger logger.Logger
-	// 其他监控相关字段
 }
 
 func NewMonitorStruct(config *config.AppConfig, logger logger.Logger) *MonitorStruct {

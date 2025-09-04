@@ -2,7 +2,7 @@ package restart
 
 import (
 	"testing"
-	"file-flow-service/internal/service"
+	"file-flow-service/internal/service/interfaces"
 	"file-flow-service/config"
 	"file-flow-service/utils/logger"
 	"github.com/stretchr/testify/assert"

@@ -32,16 +32,14 @@ threadpool:
   auto_scale: true # 是否启用动态调整线程数（根据负载自动增减）
   min_workers: 5 # 动态调整时的最小线程数
   memory_limit: "50GB" # 线程池内存限制（Go单位格式，如50GB）
-  #memory_limit: "50GB" # 合法
+  #  memory_limit: "50GB" # 合法
   #  memory_limit: "1024MB" # 合法
-  # memory_limit: "512K" # 合法
+  #  memory_limit: "512K" # 合法
   #  memory_limit: "0.5TB" # 合法
   #  memory_limit: "invalid" # 非法（缺少单位）
   #  memory_limit: "100ZB" # 非法（单位不支持）
 
 web:
-  middleware:
-    auth_enabled: true # 是否启用中间件认证（true/false）
   routes:
     health_check: "/health" # 健康检查HTTP端点路径
     task_endpoint: "/api/task" # 任务API端点路径
@@ -64,14 +62,6 @@ hot_reload:
     - "app.port" # 允许热重载的配置路径
     - "logger.levels" # 允许热重载的配置路径
     - "threadpool.max_workers" # 允许热重载的配置路径
-
-security:
-  jwt_secret: "your_secure_jwt_secret_here" # JWT加密密钥（需替换为实际密钥）
-  csrf_enabled: true # 是否启用CSRF保护（true/false）
-
-database:
-  connection: "" # 数据库连接字符串（根据实际环境填写）
-
 
 logging:
   rotate_size: 10485760 # 日志轮转文件大小阈值（字节，此处为10MB）
@@ -98,7 +88,7 @@ sandbox:
 monitoring:
   status_push_interval: "500ms" # WebSocket状态推送间隔（实时监控频率）
   health_check:
-    path: "/healthz" # 健康检查HTTP端点路径
+    path: "/health" # 健康检查HTTP端点路径
     interval: "1m" # 健康检查执行间隔（Go Duration格式）
   resource_thresholds:
     memory_usage_percent: 90 # 内存使用率告警阈值（百分比）
@@ -139,29 +129,5 @@ file_management:
     results: "./file/results" # 任务结果文件存储路径
     logs: "./file/logs" # 全局日志文件存储路径
 
-permission_conf:
-  roles:
-    - name: "Admin" # 角色名称
-      permissions:
-        - "manage_all_tasks" # 权限项：管理所有任务
-        - "modify_config" # 权限项：修改配置
-        - "access_audit_logs" # 权限项：访问审计日志
-        - "view_task_status" # 权限项：查看任务状态
-        - "download_results" # 权限项：下载结果文件
-        - "submit_tasks" # 权限项：提交新任务
-        - "upload_files" # 权限项：上传文件
-    - name: "Editor" # 角色名称
-      permissions:
-        - "submit_tasks" # 权限项：提交新任务
-        - "upload_files" # 权限项：上传文件
-        - "view_task_status" # 权限项：查看任务状态
-    - name: "Viewer" # 角色名称
-      permissions:
-        - "view_task_status" # 权限项：查看任务状态
-        - "download_results" # 权限项：下载结果文件
-  default_role: "Viewer" # 未认证用户默认角色
-  require_confirmation:
-    - "delete_task_directory" # 需要二次确认的操作 删除任务文件夹
-    - "terminate_others_tasks" # 需要二次确认的操作
 
 monitor_interval: "5s" # 新增的监控间隔配置项
