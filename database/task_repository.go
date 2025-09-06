@@ -1,8 +1,9 @@
 package database
 
 import (
-	"log"
 	"time"
+	"file-flow-service/utils/logger"
+	"go.uber.org/zap"
 )
 
 // Task represents a task entity
@@ -104,10 +105,10 @@ func CreateTask(task *Task) error {
 		task.ID, task.Name, task.Status, task.Creator, task.CreatedAt, task.AssignedTo, task.Description, task.ResultPath, task.Progress, task.Duration, task.FinishedAt, task.StartedAt,
 	)
 	if err != nil {
-		log.Printf("创建任务失败: %v", err)
+		logger.GetLogger().Error("创建任务失败", zap.Error(err))
 		return err
 	}
-	log.Printf("成功创建任务: %s", task.ID)
+	logger.GetLogger().Error("成功创建任务", zap.String("id", task.ID))
 	return nil
 }
 
@@ -118,7 +119,7 @@ func GetTaskByID(id string) (*Task, error) {
 	var task Task
 	err := row.Scan(&task.ID, &task.Name, &task.Status, &task.Creator, &task.CreatedAt, &task.AssignedTo, &task.Description, &task.ResultPath, &task.Progress, &task.Duration, &task.FinishedAt, &task.StartedAt)
 	if err != nil {
-		log.Printf("查询任务失败: %v", err)
+		logger.GetLogger().Error("查询任务失败", zap.Error(err))
 		return nil, err
 	}
 	return &task, nil
@@ -133,7 +134,7 @@ func UpdateTask(task *Task) error {
 		task.Name, task.Status, task.Creator, task.AssignedTo, task.Description, task.ResultPath, task.Progress, task.Duration, task.FinishedAt, task.StartedAt, task.ID,
 	)
 	if err != nil {
-		log.Printf("更新任务失败: %v", err)
+		logger.GetLogger().Error("更新任务失败", zap.Error(err))
 		return err
 	}
 	return nil
@@ -143,7 +144,7 @@ func UpdateTask(task *Task) error {
 func DeleteTask(id string) error {
 	_, err := db.Exec("DELETE FROM tasks WHERE id = ?", id)
 	if err != nil {
-		log.Printf("删除任务失败: %v", err)
+		logger.GetLogger().Error("删除任务失败", zap.Error(err))
 		return err
 	}
 	return nil
@@ -153,7 +154,7 @@ func DeleteTask(id string) error {
 func GetTasks() ([]Task, error) {
 	rows, err := db.Query("SELECT id, name, status, creator, createdAt, assignedTo, description, resultPath, progress, duration, finishedAt, startedAt FROM tasks")
 	if err != nil {
-		log.Printf("获取任务列表失败: %v", err)
+		logger.GetLogger().Error("获取任务列表失败", zap.Error(err))
 		return nil, err
 	}
 	defer rows.Close()
@@ -162,7 +163,7 @@ func GetTasks() ([]Task, error) {
 	for rows.Next() {
 		var task Task
 		if err := rows.Scan(&task.ID, &task.Name, &task.Status, &task.Creator, &task.CreatedAt, &task.AssignedTo, &task.Description, &task.ResultPath, &task.Progress, &task.Duration, &task.FinishedAt, &task.StartedAt); err != nil {
-			log.Printf("任务扫描失败: %v", err)
+			logger.GetLogger().Error("任务扫描失败", zap.Error(err))
 			continue
 		}
 		tasks = append(tasks, task)
