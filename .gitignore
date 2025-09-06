@@ -3,4 +3,3 @@
 .vscode
 config\.initialized
 web\file-flow-web\node_modules
-migration.go
