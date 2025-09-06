@@ -29,6 +29,7 @@ type Service interface {
 
 type TaskInterface interface {
 	GetID() string
+	GetName() string
 	GetStatus() string
 	SetStatus(status string)
 	Execute() error
@@ -38,6 +39,12 @@ type TaskInterface interface {
 	SetDuration(duration int64)
 	GetFinishedAt() int64
 	SetFinishedAt(finishTime int64)
+	GetCreatedAt() string
+	GetCreator() string
+	GetAssignedTo() string
+	GetDescription() string
+	GetResultPath() string
+	GetProgress() int64
 }
 
 type ProcessInfo struct {
@@ -84,6 +91,7 @@ type Task struct {
 	ID        string    `json:"id"`
 	Name      string    `json:"name"`
 	Status    string    `json:"status"`
+	CreatedAt string    `json:"created_at"`
 	StartedAt int64     `json:"started_at"`
 	FinishedAt int64    `json:"finished_at"`
 	Duration  int64     `json:"duration"`
@@ -92,6 +100,10 @@ type Task struct {
 
 func (t *Task) GetID() string {
 	return t.ID
+}
+
+func (t *Task) GetName() string {
+	return t.Name
 }
 
 func (t *Task) GetStatus() string {
@@ -128,4 +140,8 @@ func (t *Task) GetFinishedAt() int64 {
 
 func (t *Task) SetFinishedAt(finishTime int64) {
 	t.FinishedAt = finishTime
+}
+
+func (t *Task) GetCreatedAt() string {
+	return t.CreatedAt
 }

@@ -7,6 +7,7 @@ import (
 	"sync"
 	"file-flow-service/internal/threadpool"
 	"file-flow-service/internal/service/interfaces"
+	"file-flow-service/database"
 )
 
 type TaskManager interface {
@@ -69,11 +70,21 @@ func (tm *taskManager) UpdateTask(taskID string, status string) error {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 
-	task, exists := tm.tasks[taskID]
-	if !exists {
+	// 获取任务数据
+	task, err := database.GetTaskByID(taskID)
+	if err != nil {
+		return err
+	}
+	if task == nil {
 		return nil
 	}
-	task.SetStatus(status)
+	
+	// 更新状态
+	task.Status = status
+	// 保存到数据库
+	if err := database.UpdateTask(task); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -81,8 +92,17 @@ func (tm *taskManager) GetAllTasks() ([]*interfaces.TaskInterface, error) {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 
-	tasks := make([]*interfaces.TaskInterface, 0, len(tm.tasks))
-	for _, task := range tm.tasks {
+	// 获取所有任务
+	dbTasks, err := database.GetTasks()
+	if err != nil {
+		return nil, err
+	}
+	
+	// 转换为TaskInterface
+	var tasks []*interfaces.TaskInterface
+	for _, dbTask := range dbTasks {
+		// 正确转换为接口：使用指针
+		task := interfaces.TaskInterface(&dbTask)
 		tasks = append(tasks, &task)
 	}
 	return tasks, nil
@@ -98,6 +118,22 @@ func (tm *taskManager) SubmitTask(task interfaces.TaskInterface) error {
 
 	tm.totalTasks++
 	tm.tasks[task.GetID()] = task
+	// 转换为数据库任务
+	dbTask := database.Task{
+		ID:          task.GetID(),
+		Name:        task.GetName(),
+		Status:      task.GetStatus(),
+		Creator:     task.GetCreator(),
+		CreatedAt:   task.GetCreatedAt(),
+		AssignedTo:  task.GetAssignedTo(),
+		Description: task.GetDescription(),
+		ResultPath:  task.GetResultPath(),
+		Progress:    task.GetProgress(),
+	}
+	
+	if err := database.CreateTask(&dbTask); err != nil {
+		return err
+	}
 	tm.activeTaskCount++
 
 	tm.logger.Info("任务已提交到执行器: " + task.GetID())

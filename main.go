@@ -5,6 +5,7 @@ package main
 
 import (
 	"file-flow-service/config"
+	"file-flow-service/initialization"
 	"file-flow-service/internal/restart"
 	"file-flow-service/internal/service"
 	"file-flow-service/sandbox/environments"
@@ -15,6 +16,16 @@ import (
 )
 
 func main() {
+	// 检查是否需要初始化（首次运行时执行）
+	if initialization.IsInitialRun() {
+		if err := initialization.InitApp(); err != nil {
+			log.Fatalf("项目初始化失败: %v", err)
+		}
+		log.Println("项目初始化完成，所有必要资源已就绪")
+	} else {
+		log.Println("无需初始化，项目已就绪")
+	}
+
 	// 1. 加载配置
 	configPath := "config/config.yaml"
 	if err := config.InitConfig(configPath); err != nil {
@@ -23,9 +34,9 @@ func main() {
 	appConfig := config.GetConfig()
 
 	// 2. 初始化日志模块
-if err := logger.InitLogger(); err != nil {
-    log.Fatalf("日志初始化失败: %v", err)
-}
+	if err := logger.InitLogger(); err != nil {
+		log.Fatalf("日志初始化失败: %v", err)
+	}
 	appLogger := logger.GetLogger()
 
 	// 3. 初始化环境管理模块
